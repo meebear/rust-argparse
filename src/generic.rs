@@ -10,7 +10,7 @@ use super::action::ParseResult::{Parsed, Error};
 use super::action::Action::{Flag, Single, Push, Many};
 
 pub struct StoreConstAction<'a, T: 'a> {
-    pub value: T,
+    pub value: T,  // the const
     pub cell: Rc<RefCell<&'a mut T>>,
 }
 
@@ -19,7 +19,7 @@ pub struct PushConstAction<'a, T: 'a> {
     pub cell: Rc<RefCell<&'a mut Vec<T>>>,
 }
 
-pub struct StoreAction<'a, T: 'a> {
+pub struct StoreAction<'a, T: 'a> { //store something parsed from command line
     pub cell: Rc<RefCell<&'a mut T>>,
 }
 
@@ -31,39 +31,40 @@ pub struct ListAction<'a, T: 'a> {
     cell: Rc<RefCell<&'a mut Vec<T>>>,
 }
 
-impl<T: 'static + Clone> TypedAction<T> for StoreConst<T> {
+impl<T: Clone> TypedAction<T> for StoreConst<T> {
     fn bind<'x>(&self, cell: Rc<RefCell<&'x mut T>>) -> Action<'x> {
-        let StoreConst(ref val) = *self;
+        let StoreConst(val) = self;
         return Flag(Box::new(StoreConstAction { cell: cell, value: val.clone() }));
     }
 }
 
-impl<T: 'static + Clone> TypedAction<Vec<T>> for PushConst<T> {
+impl<T: Clone> TypedAction<Vec<T>> for PushConst<T> {
     fn bind<'x>(&self, cell: Rc<RefCell<&'x mut Vec<T>>>) -> Action<'x> {
-        let PushConst(ref val) = *self;
+        let PushConst(val) = self;
         return Flag(Box::new(PushConstAction { cell: cell, value: val.clone() }));
     }
 }
 
-impl<T: 'static + FromStr> TypedAction<T> for Store {
+impl<T: FromStr> TypedAction<T> for Store {
     fn bind<'x>(&self, cell: Rc<RefCell<&'x mut T>>) -> Action<'x> {
         return Single(Box::new(StoreAction { cell: cell }));
     }
 }
 
-impl<T: 'static + FromStr> TypedAction<Option<T>> for StoreOption {
+impl<T: FromStr> TypedAction<Option<T>> for StoreOption {
     fn bind<'x>(&self, cell: Rc<RefCell<&'x mut Option<T>>>) -> Action<'x> {
         return Single(Box::new(StoreOptionAction { cell: cell }));
     }
 }
 
-impl<T: 'static + FromStr + Clone> TypedAction<Vec<T>> for List {
+// ?AK? why do we need Clone here
+impl<T: FromStr + Clone> TypedAction<Vec<T>> for List {
     fn bind<'x>(&self, cell: Rc<RefCell<&'x mut Vec<T>>>) -> Action<'x> {
         return Many(Box::new(ListAction { cell: cell }));
     }
 }
 
-impl<T: 'static + FromStr + Clone> TypedAction<Vec<T>> for Collect {
+impl<T: FromStr + Clone> TypedAction<Vec<T>> for Collect {
     fn bind<'x>(&self, cell: Rc<RefCell<&'x mut Vec<T>>>) -> Action<'x> {
         return Push(Box::new(ListAction { cell: cell }));
     }
@@ -115,8 +116,8 @@ impl<'a, T: FromStr> IArgAction for StoreOptionAction<'a, T> {
 
 impl<'a, T: FromStr + Clone> IArgsAction for ListAction<'a, T> {
     fn parse_args(&self, args: &[&str]) -> ParseResult {
-        let mut result = vec!();
-        for arg in args.iter() {
+        let mut result = vec![];
+        for arg in args {
             match FromStr::from_str(*arg) {
                 Ok(x) => {
                     result.push(x);
