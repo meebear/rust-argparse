@@ -8,7 +8,6 @@ use std::iter::Peekable;
 use std::slice::Iter;
 use std::hash::Hash;
 use std::hash::Hasher;
-use std::ascii::AsciiExt;
 use std::str::FromStr;
 use std::process::exit;
 

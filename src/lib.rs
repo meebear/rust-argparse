@@ -3,8 +3,8 @@
 
 pub use self::parser::{ArgumentParser, Ref};
 
-pub mod action;
-pub mod parser;
+mod action;
+mod parser;
 mod generic;
 mod custom;
 mod help;
@@ -18,7 +18,6 @@ pub trait FromCommandLine: Sized {
     fn from_argument(s: &str) -> Result<Self, String>;
 }
 
-// TODO(tailhook) make consts
 pub struct StoreTrue;
 pub struct StoreFalse;
 
