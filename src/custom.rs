@@ -20,27 +20,26 @@ pub struct ParseListAction<'a, T: 'a> {
     cell: Rc<RefCell<&'a mut Vec<T>>>,
 }
 
-impl<T: 'static + FromCommandLine> TypedAction<T> for Parse {
+impl<T: FromCommandLine> TypedAction<T> for Parse {
     fn bind<'x>(&self, cell: Rc<RefCell<&'x mut T>>) -> Action<'x> {
         return Single(Box::new(ParseAction { cell: cell }));
     }
 }
 
-impl<T: 'static + FromCommandLine> TypedAction<Option<T>> for ParseOption {
+impl<T: FromCommandLine> TypedAction<Option<T>> for ParseOption {
     fn bind<'x>(&self, cell: Rc<RefCell<&'x mut Option<T>>>) -> Action<'x> {
         return Single(Box::new(ParseOptionAction { cell: cell }));
     }
 }
 
-impl<T: 'static + FromCommandLine + Clone> TypedAction<Vec<T>> for ParseList {
+impl<T: FromCommandLine + Clone> TypedAction<Vec<T>> for ParseList {
     fn bind<'x>(&self, cell: Rc<RefCell<&'x mut Vec<T>>>) -> Action<'x> {
         return Many(Box::new(ParseListAction { cell: cell }));
     }
 }
 
-impl<T> TypedAction<Vec<T>> for ParseCollect
-    where T: 'static + FromCommandLine + Clone
-{
+// ?AK? how ParseList and ParseCollect differentiated? they both use ParseListAction
+impl<T: FromCommandLine + Clone> TypedAction<Vec<T>> for ParseCollect {
     fn bind<'x>(&self, cell: Rc<RefCell<&'x mut Vec<T>>>) -> Action<'x> {
         return Push(Box::new(ParseListAction { cell: cell }))
     }
@@ -48,7 +47,7 @@ impl<T> TypedAction<Vec<T>> for ParseCollect
 
 impl<'a, T: FromCommandLine> IArgAction for ParseAction<'a, T> {
     fn parse_arg(&self, arg: &str) -> ParseResult {
-        match FromCommandLine::from_argument(arg) {
+        match T::from_argument(arg) {
             Ok(x) => {
                 **self.cell.borrow_mut() = x;
                 return Parsed;
@@ -62,7 +61,7 @@ impl<'a, T: FromCommandLine> IArgAction for ParseAction<'a, T> {
 
 impl<'a, T: FromCommandLine> IArgAction for ParseOptionAction<'a, T> {
     fn parse_arg(&self, arg: &str) -> ParseResult {
-        match FromCommandLine::from_argument(arg) {
+        match T::from_argument(arg) {
             Ok(x) => {
                 **self.cell.borrow_mut() = Some(x);
                 return Parsed;
@@ -76,8 +75,8 @@ impl<'a, T: FromCommandLine> IArgAction for ParseOptionAction<'a, T> {
 
 impl<'a, T: FromCommandLine + Clone> IArgsAction for ParseListAction<'a, T> {
     fn parse_args(&self, args: &[&str]) -> ParseResult {
-        let mut result = vec!();
-        for arg in args.iter() {
+        let mut result = vec![];
+        for arg in args {
             match FromCommandLine::from_argument(*arg) {
                 Ok(x) => {
                     result.push(x);
