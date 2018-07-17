@@ -18,16 +18,16 @@ pub struct DecrByAction<'a, T: 'a> {
     cell: Rc<RefCell<&'a mut T>>,
 }
 
-impl<T: 'static + Add<Output = T> + Clone> TypedAction<T> for IncrBy<T> {
+impl<T: Add<Output = T> + Clone> TypedAction<T> for IncrBy<T> {
     fn bind<'x>(&self, cell: Rc<RefCell<&'x mut T>>) -> Action<'x> {
-        let IncrBy(ref delta) = *self;
+        let IncrBy(delta) = self;
         return Flag(Box::new(IncrByAction { cell: cell, delta: delta.clone() }));
     }
 }
 
-impl<T: 'static + Sub<Output = T> + Clone> TypedAction<T> for DecrBy<T> {
+impl<T: Sub<Output = T> + Clone> TypedAction<T> for DecrBy<T> {
     fn bind<'x>(&self, cell: Rc<RefCell<&'x mut T>>) -> Action<'x> {
-        let DecrBy(ref delta) = *self;
+        let DecrBy(delta) = self;
         return Flag(Box::new(DecrByAction { cell: cell, delta: delta.clone() }));
     }
 }
