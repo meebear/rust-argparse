@@ -11,6 +11,15 @@ impl FromCommandLine for PathBuf {
     }
 }
 
+/* ?AK? conflict to PathBuf even PathBuf doesn't implement FromStr now
+use std::fmt::Debug;
+impl<T: FromStr + Debug> FromCommandLine for T {
+    fn from_argument(s: &str) -> Result<Self, String> {
+        FromStr::from_str(s).map_err(|e| format!("{:?}", e))
+    }
+}
+*/
+
 impl FromCommandLine for f32 {
     fn from_argument(s: &str) -> Result<Self, String> {
         FromStr::from_str(s).map_err(|e| format!("{:?}", e))
