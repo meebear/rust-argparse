@@ -9,7 +9,7 @@ pub struct HelpAction;
 
 impl IFlagAction for HelpAction {
     fn parse_flag(&self) -> ParseResult {
-        return Help;
+        Help
     }
 }
 
@@ -21,13 +21,14 @@ struct WordsIter<'a> {
 
 impl<'a> WordsIter<'a> {
     fn new(data: &'a str) -> WordsIter<'a> {
-        return WordsIter {
-            data: data,
+        WordsIter {
+            data,
             iter: data.char_indices(),
-            };
+        }
     }
 }
 
+// to return word by word, ignore \t, \n, \r and extra spaces
 impl<'a> Iterator for WordsIter<'a> {
     type Item = &'a str;
     fn next(&mut self) -> Option<&'a str> {
@@ -35,7 +36,7 @@ impl<'a> Iterator for WordsIter<'a> {
         loop {
             let (idx, ch) = match self.iter.next() {
                 None => return None,
-                Some((idx, ch)) => ((idx, ch)),
+                Some(idx_ch) => idx_ch,
             };
             match ch {
                 ' ' | '\t' | '\r' | '\n' => continue,
@@ -61,6 +62,7 @@ impl<'a> Iterator for WordsIter<'a> {
     }
 }
 
+// ?AK? review how other result types are converted to Result type, '?'
 pub fn wrap_text(buf: &mut Write, data: &str, width: usize, indent: usize)
     -> IoResult<()>
 {
@@ -71,22 +73,22 @@ pub fn wrap_text(buf: &mut Write, data: &str, width: usize, indent: usize)
             return Ok(());
         }
         Some(word) => {
-            try!(buf.write(word.as_bytes()));
+            buf.write(word.as_bytes())?;
             off += word.len();
         }
     }
     for word in witer {
         if off + word.len() + 1 > width {
-            try!(buf.write(b"\n"));
+            buf.write(b"\n")?;
             for _ in 0..indent {
-                try!(buf.write(b" "));
+                buf.write(b" ")?;
             }
             off = indent;
         } else {
-            try!(buf.write(b" "));
+            buf.write(b" ")?;
             off += 1;
         }
-        try!(buf.write(word.as_bytes()));
+        buf.write(word.as_bytes())?;
         off += word.len();
     }
     return Ok(());
