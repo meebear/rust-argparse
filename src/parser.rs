@@ -26,10 +26,8 @@ use action::IFlagAction;
 
 use self::ArgumentKind::{Positional, ShortOption, LongOption, Delimiter};
 
-
 static OPTION_WIDTH: usize = 24;
 static TOTAL_WIDTH: usize = 79;
-
 
 enum ArgumentKind {
     Positional,
@@ -37,7 +35,6 @@ enum ArgumentKind {
     LongOption,
     Delimiter, // Barely "--"
 }
-
 
 impl ArgumentKind {
     fn check(name: &str) -> ArgumentKind {
@@ -61,7 +58,7 @@ impl ArgumentKind {
 
 struct GenericArgument<'parser> {
     id: usize,
-    varid: usize,
+    varid: usize, // argument must always bind with a variable
     name: &'parser str,
     help: &'parser str,
     action: Action<'parser>,
@@ -69,7 +66,7 @@ struct GenericArgument<'parser> {
 
 struct GenericOption<'parser> {
     id: usize,
-    varid: Option<usize>,
+    varid: Option<usize>, // -h, --help f.g. don't bind with any var
     names: Vec<&'parser str>,
     help: &'parser str,
     action: Action<'parser>,
@@ -78,7 +75,7 @@ struct GenericOption<'parser> {
 struct EnvVar<'parser> {
     varid: usize,
     name: &'parser str,
-    action: Box<IArgAction + 'parser>,
+    action: Box<IArgAction + 'parser>, // env always have one arg (value)
 }
 
 impl<'a> Hash for GenericOption<'a> {
@@ -289,7 +286,7 @@ impl<'a, 'b> Context<'a, 'b> {
                 Some(arg) => { arg }
                 None => { break; }
             };
-            let res = match ArgumentKind::check(&arg[..]) {
+            let res = match ArgumentKind::check(arg) {
                 Positional => {
                     self.postpone_argument(&arg[..]);
                     if self.parser.stop_on_first_argument {
@@ -960,5 +957,4 @@ impl<'a, 'b> HelpFormatter<'a, 'b> {
         try!(write!(self.buf, "\n"));
         return Ok(());
     }
-
 }
